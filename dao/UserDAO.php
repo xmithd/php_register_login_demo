@@ -1,6 +1,6 @@
 <?php
 
-require_once '../entities/UserEntity.php';
+require_once __DIR__.'/../entities/UserEntity.php';
 /**
  * Interface for retrieving and saving user information
  * 
@@ -16,7 +16,7 @@ interface UserDAO
     /**
      * Saves user in the database
      * @param UserEntity $user
-     * @return the UserEntity with the correct id? null if the save fails.
+     * @return UserEntity the entity with the correct id? null if the save fails.
      */
     function saveUser(UserEntity $user, string $hashedPwd);
 

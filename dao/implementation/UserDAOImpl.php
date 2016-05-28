@@ -1,14 +1,14 @@
 <?php
-
+require_once __DIR__.'/../UserDAO.php';
 /**
- * Created by IntelliJ IDEA.
- * User: link
- * Date: 2016-05-17
- * Time: 9:02 PM
+ * UserDAOImpl
+ * Straightforward implementation of UserDAO
+ * TODO: use bindValue or bindParam? Also, exception handling.
  */
 class UserDAOImpl implements UserDAO
 {
 
+    // PDO instance
     private $conn;
 
     public function __construct(PDO $connection)
@@ -26,7 +26,7 @@ class UserDAOImpl implements UserDAO
         FROM USER_ACCOUNTS
         WHERE display_name LIKE :name');
         $param = '%'. $namelike .'%';
-        $stmt->bindParam(':name', $param);
+        $stmt->bindParam(':name', $param, PDO::PARAM_STR);
         $stmt->execute();
         $results = $stmt->fetchAll();
         return array_map(function ($it) {
@@ -40,20 +40,23 @@ class UserDAOImpl implements UserDAO
 
     /**
      * Saves user in the database
-     * @param UserEntity $user
-     * @return the UserEntity with the correct id? null if the save fails.
+     * @param UserEntity $user the user entity object to save
+     * @param string $hashedPwd  The hashed password to store in the database
+     * @return UserEntity The entity with the correct id? null if the save fails.
      */
     function saveUser(UserEntity $user, string $hashedPwd)
     {
-        // TODO validation?
+        // TODO validation
         $stmt = $this->conn->prepare("INSERT INTO USER_ACCOUNTS (email, display_name, password)
         VALUES(:email,:display_name, :pwd)
         ");
-        $stmt->bindParam(':email', $user->getEmail());
-        $stmt->bindParam(':display_name', $user->getDisplayName() );
+        $userEmail = $user->getEmail();
+        $userDisplayName = $user->getDisplayName();
+        $stmt->bindParam(':email', $userEmail);
+        $stmt->bindParam(':display_name', $userDisplayName );
         $stmt->bindParam(':pwd', $hashedPwd );
         $stmt->execute();
-        return true;
+        return $this->getUserByEmail($userEmail)['user'];
     }
 
     /**
@@ -79,7 +82,7 @@ class UserDAOImpl implements UserDAO
 
     /**
      * @param string $email
-     * @return the user and password map. keys: ['user', 'hashed_pwd']
+     * @return array with user and password map. keys: ['user', 'hashed_pwd']
      */
     function getUserByEmail(string $email)
     {
@@ -89,7 +92,7 @@ class UserDAOImpl implements UserDAO
         $row = $stmt->fetch();
         if ($row) {
             $user = new UserEntity();
-            $user->setId($id);
+            $user->setId($row['user_id']);
             $user->setDisplayName($row['display_name']);
             $user->setEmail($row['email']);
             return array(
@@ -111,10 +114,11 @@ class UserDAOImpl implements UserDAO
         email = :email, display_name = :display_name 
         WHERE user_id = :user_id');
         $new_email = $user->getEmail();
+        $userId = $user->getId();
         $new_display_name = $user->getDisplayName();
         $stmt->bindParam(':email', $new_email);
         $stmt->bindParam(':display_name', $new_display_name );
-        $stmt->bindParam(':user_id', $user->getId());
+        $stmt->bindParam(':user_id', $userId);
         $stmt->execute();
         return true;
     }
@@ -128,8 +132,9 @@ class UserDAOImpl implements UserDAO
         $stmt = $this->conn->prepare('UPDATE USER_ACCOUNTS SET
         password = :password 
         WHERE user_id = :user_id');
+        $userId = $user->getId();
         $stmt->bindParam(':password', $new_hashed_pwd);
-        $stmt->bindParam(':user_id', $user->getId());
+        $stmt->bindParam(':user_id', $userId);
         $stmt->execute();
         return true;
     }
