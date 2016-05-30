@@ -77,10 +77,20 @@ class UserEntity
     {
         return $this->admin;
     }
-    
+
+    /**
+     * @return string JSON representation of this entity
+     */
     public function toJson()
     {
-        return json_encode($this);
+        return json_encode(
+            array(
+                'id' => intval($this->id, 10),
+                'email' => $this->email,
+                'display_name' => $this->display_name,
+                'isAdmin' => $this->admin
+            )
+        );
     }
 
 }

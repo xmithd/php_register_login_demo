@@ -31,7 +31,7 @@ class UserDAOImpl implements UserDAO
         $results = $stmt->fetchAll();
         return array_map(function ($it) {
             $user = new UserEntity();
-            $user->setId($it['user_id']);
+            $user->setId(intval($it['user_id'], 10));
             $user->setDisplayName($it['display_name']);
             $user->setEmail($it['email']);
             return $user;
@@ -52,9 +52,9 @@ class UserDAOImpl implements UserDAO
         ");
         $userEmail = $user->getEmail();
         $userDisplayName = $user->getDisplayName();
-        $stmt->bindParam(':email', $userEmail);
-        $stmt->bindParam(':display_name', $userDisplayName );
-        $stmt->bindParam(':pwd', $hashedPwd );
+        $stmt->bindParam(':email', $userEmail, PDO::PARAM_STR);
+        $stmt->bindParam(':display_name', $userDisplayName, PDO::PARAM_STR);
+        $stmt->bindParam(':pwd', $hashedPwd, PDO::PARAM_INT );
         $stmt->execute();
         return $this->getUserByEmail($userEmail)['user'];
     }
@@ -66,7 +66,7 @@ class UserDAOImpl implements UserDAO
     function getUserById(int $id)
     {
         $stmt = $this->conn->prepare('SELECT * from USER_ACCOUNTS WHERE user_id = :id');
-        $stmt->bindParam(':id', $id );
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT );
         $stmt->execute();
         $row = $stmt->fetch();
         if ($row) {
@@ -92,7 +92,7 @@ class UserDAOImpl implements UserDAO
         $row = $stmt->fetch();
         if ($row) {
             $user = new UserEntity();
-            $user->setId($row['user_id']);
+            $user->setId(intval($row['user_id'], 10));
             $user->setDisplayName($row['display_name']);
             $user->setEmail($row['email']);
             return array(
@@ -116,9 +116,9 @@ class UserDAOImpl implements UserDAO
         $new_email = $user->getEmail();
         $userId = $user->getId();
         $new_display_name = $user->getDisplayName();
-        $stmt->bindParam(':email', $new_email);
-        $stmt->bindParam(':display_name', $new_display_name );
-        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':email', $new_email, PDO::PARAM_STR);
+        $stmt->bindParam(':display_name', $new_display_name, PDO::PARAM_STR);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         $stmt->execute();
         return true;
     }
@@ -133,8 +133,8 @@ class UserDAOImpl implements UserDAO
         password = :password 
         WHERE user_id = :user_id');
         $userId = $user->getId();
-        $stmt->bindParam(':password', $new_hashed_pwd);
-        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':password', $new_hashed_pwd, PDO::PARAM_STR);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         $stmt->execute();
         return true;
     }
@@ -146,7 +146,7 @@ class UserDAOImpl implements UserDAO
     function deleteUser(int $id)
     {
         $stmt = $this->conn->prepare('DELETE FROM USER_ACCOUNTS WHERE user_id = :user_id');
-        $stmt->bindParam(':user_id', $id);
+        $stmt->bindParam(':user_id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return true;
     }
